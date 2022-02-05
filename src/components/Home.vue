@@ -1,6 +1,6 @@
 <template>
   <v-container class="fill-height main-body">
-    <v-row class="">
+    <v-row>
       <v-col cols="6">
         <div class="display-3 font-weight-black spacing">
           START TO EXPLORE
