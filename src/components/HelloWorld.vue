@@ -80,7 +80,7 @@ export default {
    
   },
   async mounted() {
-  
+  /*
      myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 10,1).then(response =>{
         console.log("Returned:",response)
         this.followers = response.identity.followers.list
@@ -99,8 +99,41 @@ export default {
     })
 
     console.log(myModule.isValid("0x148d59faf10b52063071eddf4aaf63a395f2d41c"))
+    myModule.getBalance("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
+    */
+   /*
+    myModule.getData("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,1).then(response =>{
+      console.log("metaaa: ", response)
+    })
+ 
+    let [res1, res2, res3, res4, res5, res6, res7, res8] = await Promise.all([myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,1), 
+                                    myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,2),
+                                    myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,3),
+                                    myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,4),
+                                    myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,5),
+                                    myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,6),
+                                    myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,7),
+                                    myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 50,8)])
+    
+    var list1 = res1.identity.followers.list
+    list1 = list1.concat(res2.identity.followers.list)
+    list1 = list1.concat(res3.identity.followers.list)
+    list1 = list1.concat(res4.identity.followers.list)
+    list1 = list1.concat(res5.identity.followers.list)
+    list1 = list1.concat(res6.identity.followers.list)
+    list1 = list1.concat(res7.identity.followers.list)
+    list1 = list1.concat(res8.identity.followers.list)
+    console.log(list1.length)
+     */
+
+    myModule.createUniqueList("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
+    //myModule.getETHTransactions("0x63a9975ba31b0b9626b34300f7f627147df1f526")
+    //console.log(res.data.result)
+    //myModule.getERC20Tokens("0x63a9975ba31b0b9626b34300f7f627147df1f526")
+    //myModule.getNFTTokens("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
   }
   
+    
   
 }
 </script>
