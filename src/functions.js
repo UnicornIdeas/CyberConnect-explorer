@@ -1,5 +1,4 @@
- 
- import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
+import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
  import {  MUTUAL_FOLLOW_QUERY, RECOMMENDATION_QUERY } from './graphql/queries.js'
 
  import axios from 'axios'
@@ -88,10 +87,12 @@ async function basicInfo(address){
     return result
 }
 
+/*
 export function isValid(address){
     let result = web3.utils.isAddress(address)
     return result
 }
+*/
 
 export async function getBalance(address){
     let params = {
@@ -102,8 +103,9 @@ export async function getBalance(address){
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
     const res = await axios.get("https://api.etherscan.io/api", {params: params})
-    console.log("resss: ", res)
-    
+    console.log(res)
+    let eth = web3.utils.fromWei(res.data.result, "ether")
+    console.log(eth)
 }
 
 
@@ -117,7 +119,6 @@ export async function getETHTransactions(address){
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
     const res = await axios.get("https://api.etherscan.io/api", {params: params})
-    console.log("resss: ", res)
     return res.data.result
 }
 
@@ -129,7 +130,6 @@ export async function getERC20Tokens(address){
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
     const res = await axios.get("https://api.etherscan.io/api", {params: params})
-    console.log("resss: ", res)
     return res.data.result
 }
 
@@ -141,7 +141,6 @@ export async function getNFTTokens(address){
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
     const res = await axios.get("https://api.etherscan.io/api", {params: params})
-    console.log("resss: ", res)
     return res.data.result
 }
 
@@ -151,50 +150,46 @@ function runTask(spec){
 
 function createElement(address, field, element=null){
     let newElem = {}
-   
+    newElem.isFollowing = false
+    newElem.isFollower = false
+    newElem.isRecommended = false
+    newElem.hasERC20Token = false
+    newElem.hasETHTransaction = false
+    newElem.hasNFTTransaction = false
     switch(field){
+        
         case 'isFollowing': 
         if (element != null){
-            newElem = {
-                address: address,
-                alias: element.alias,
-                avatar: element.avatar,
-                domain: element.domain,
-                namespace: element.namespace,
-                lastModifiedTime: element.lastModifiedTime
-                }
-            }
+            newElem.address = element.address
+            newElem.alias = element.alias
+            newElem.avatar = element.avatar
+            newElem.domain = element.domain
+            newElem.namespace = element.namespace
+            newElem.lastModifiedTime = element.lastModifiedTime
+        }
             newElem.isFollowing = true
-            newElem.isFollower = false
-            newElem.hasERC20Token = false
-            newElem.hasETHTransaction = false
-            newElem.hasNFTTransaction = false
+            break;
+        case 'isRecommended':
+            newElem.address = element.address
+            newElem.avatar = element.avatar
+            newElem.domain = element.domain
+            newElem.isRecommended = true
+            newElem.followerCount = element.followerCount
+            newElem.recommendationReason = element.recommendationReason
+            newElem.recommendationFilter = element.recommendationFilter
             break;
         case 'hasETHTransaction':
             newElem.address = address
-            newElem.isFollowing = false
-            newElem.isFollower = false
-            newElem.hasERC20Token = false
             newElem.hasETHTransaction = true
-            newElem.hasNFTTransaction = false
             break;
         case 'hasERC20Token':
             newElem.address = address
-            newElem.isFollowing = false
-            newElem.isFollower = false
             newElem.hasERC20Token = true
-            newElem.hasETHTransaction = false
-            newElem.hasNFTTransaction = false
             newElem.Token = element
             break;
         case 'hasNFTTransaction':
             newElem.address = address
-            newElem.isFollowing = false
-            newElem.isFollower = false
-            newElem.hasERC20Token = false
-            newElem.hasETHTransaction = false
             newElem.hasNFTTransaction = true
-            newElem.Token = element
             break;
             
         
@@ -202,6 +197,47 @@ function createElement(address, field, element=null){
    return newElem
 }
 
+
+export async function getRecommendationList(address, filter){
+    let itemsPerPage = 50
+    let after = 1
+    //let data = ""
+    let reccList = []
+    
+    let hasNext = true
+
+    while (hasNext){
+        let results = await recommendationQuery(address, filter, itemsPerPage, after)
+        let data = results.recommendations.data
+        if (data != null){
+            reccList = reccList.concat(data.list)
+            hasNext = data.pageInfo.hasNextPage
+            after = after + 1
+        }
+        else hasNext = false
+    }
+    return reccList
+
+}
+
+
+export async function getAllRecommendations(address){
+    let final_list = []
+    let social = await getRecommendationList(address, "SOCIAL")
+    social = social.map(obj => ({ ...obj, recommendationFilter: "SOCIAL"}))
+    let game = await getRecommendationList(address, "GAME")
+    game = game.map(obj => ({ ...obj, recommendationFilter: "GAME"}))
+    let defi = await getRecommendationList(address, "DEFI")
+    defi = defi.map(obj => ({ ...obj, recommendationFilter: "DEFI"}))
+    let nft = await getRecommendationList(address, "NFT")
+    nft = nft.map(obj => ({ ...obj, recommendationFilter: "NFT"}))
+    final_list = final_list.concat(social)
+    final_list = final_list.concat(game)
+    final_list = final_list.concat(defi)
+    final_list = final_list.concat(nft)
+
+    return final_list
+}
 
 export async function createUniqueList(address){
     let result = await basicInfo(address)
@@ -213,19 +249,9 @@ export async function createUniqueList(address){
     let followersList = []
     let followingsList = []
     let totalPages = 0
-    let parseFollowers = false
-    /*
-    let totalPagesFollowers = Math.round(followerCount/50)
-    let totalPagesFollowings = Math.round(followingsCount/50)
-
-    if (totalPagesFollowers > totalPagesFollowings){
-        totalPages = totalPagesFollowers
-        parseFollowers = true
-    } else {
-        totalPages = totalPagesFollowings
-    }
-    */
-    totalPages = Math.round(followerCount/50)
+    let parseFollowers = true
+    
+    totalPages = Math.ceil(followerCount/50)
     let currentPage = 1
     let step =0
     console.log("total pages: ", totalPages)
@@ -241,13 +267,11 @@ export async function createUniqueList(address){
         for (let i=currentPage; i< currentPage + step; i++){
             asyncThingsTodo.push({address: address, itemsPerPage: 50, page:i})
         }
-        console.log(asyncThingsTodo)
         let tasks = asyncThingsTodo.map(runTask)
         let res = await Promise.all(tasks )
         res.forEach(x => {
-            console.log(x)
             if (parseFollowers){
-                let newList = x.identity.followers.list.map(obj => ({...obj, isFollower: true, isFollowing: false, hasETHTransaction: false, hasNFTTransaction: false, hasERC20Token: false}))
+                let newList = x.identity.followers.list.map(obj => ({...obj, isFollower: true, isFollowing: false, hasETHTransaction: false, hasNFTTransaction: false, hasERC20Token: false, isRecommended: false}))
                 followersList = followersList.concat(newList)
                 followingsList = followingsList.concat(x.identity.followings.list)
             }
@@ -257,17 +281,16 @@ export async function createUniqueList(address){
                 followersList = followersList.concat(x.identity.followers.list)
             
             }
-            
-            
-            console.log("followerslength: ",followersList.length)
-            console.log("followingsLength: ", followingsList.length)
-            
+           
         })
         currentPage = currentPage + step
     }
-    //console.log("acilea: ",followersList)
     followersList = await compare(followersList, followingsList,address, true, "cyberconnect")
-    console.log("fisrt: ",followersList)
+    
+    
+    let recommendationsList = await getAllRecommendations(address)
+    followersList = await compare(followersList, recommendationsList, address, false, "recommendations")
+    
     
     let ethList = await getETHTransactions(address)
     //console.log(" eth transactions",ethList.length)
@@ -286,8 +309,8 @@ export async function createUniqueList(address){
     console.log("eth list: ", ethList.length)
     console.log("erc20list: ", erc20tokenList.length)
     console.log("nft tokens: ", nftTokens.length)
-
-
+    
+    
     //return followersList
     
 }
@@ -295,17 +318,15 @@ export async function createUniqueList(address){
 function searchAddress(spec){
     let platform = spec.action
     let array = spec.array
-    if (platform == "cyberconnect"){
+    if (platform == "cyberconnect" || platform == "recommendations"){
         let address = spec.address
         let elem = spec.followingElem
         let found = array.find(element => element.address === address)
-        //console.log("search: ",address, found, array[0].address)
         if (found){
             
             let foundElement = (element) => element.address == address
             let indexElement = array.findIndex(foundElement)
-            console.log("search: ",address, found, array[indexElement].address, indexElement)
-            return [indexElement, address, null]
+            return [indexElement, address, elem]
         }
         else 
             return [-1, address, elem]
@@ -357,8 +378,7 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
         }
         let asyncThingsTodo = []
         for (let i=processed; i<processed + step;i++){
-            if (action == 'cyberconnect'){
-                console.log(i, followingsArray[i].address)
+            if (action == 'cyberconnect' || action=="recommendations"){
                 asyncThingsTodo.push({address: followingsArray[i].address, followingElem: followingsArray[i], array: followersArray, action: action})
             } else if (action == "eth" || action == "nft")  {
                 asyncThingsTodo.push({from: followingsArray[i].from, to: followingsArray[i].to, original: searchedAddress, array: followersArray, action: action})
@@ -369,8 +389,6 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
         let tasks = asyncThingsTodo.map(searchAddress)
         let res = await Promise.all(tasks )
         res.forEach(x => {
-            console.log("x: ", x)
-           
                 switch(action){
                     case "cyberconnect":
                         // 0- index 1-adresa 2-elementul din followings
@@ -388,10 +406,23 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                             followersArray.push(element)
                             break;
                         }
+                    case "recommendations":
+                        if (x[0] != -1){
+                            let updatedElem = followersArray[x[0]]
+                            updatedElem.isRecommended = true
+                            updatedElem.recommendationReason = x[2].recommendationReason
+                            updatedElem.followerCount = x[2].followerCount
+                            updatedElem.recommendationFilter = x[2].recommendationFilter
+                            followersArray[x[0]] = updatedElem
+                            break
+                        } else {
+                            let element = createElement(x[1], 'isRecommended', x[2])
+                            followersArray.push(element)
+                            break
+                        }
 
                     case "eth":
                         if (x[0] != -1){
-                            console.log (x, " ETH ")
                             updatedElem = followersArray[x[0]]
                             updatedElem.hasETHTransaction = true
                             followersArray[x[0]]= updatedElem
@@ -403,13 +434,11 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                         }
                     case "nft":
                         if (x[0] != -1){
-                            console.log (x, " update NFT ")
                             updatedElem = followersArray[x[0]]
                             updatedElem.hasNFTTransaction = true
                             followersArray[x[0]]= updatedElem
                             break;
                         } else {
-                            console.log("create nft obj")
                             let element = createElement(x[1], 'hasNFTTransaction')
                             followersArray.push(element)
                             break;
@@ -419,14 +448,12 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                     case "erc20token":
                         
                         if (x[0] != -1){
-                            console.log(x[0], "update erc20 ", x[1])
                             updatedElem = followersArray[x[0]]
                             updatedElem.hasERC20Token = true
                             updatedElem.token = x[2]
                             followersArray[x[0]]= updatedElem
                             break;
                         } else {
-                            console.log("create erc20 obj")
                             let element = createElement(x[1], 'hasERC20Token', x[2])
                             followersArray.push(element)
                             break;
@@ -440,3 +467,4 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
     
     return followersArray
 }
+

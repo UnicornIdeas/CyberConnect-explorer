@@ -117,54 +117,7 @@ query QueryRecommendation($address: String!, $filter: RecommFilter!,  $first: In
   }
 `
 
-export const CYBERCONNECT_RESULTS=`
-query FullIdentityQueryAllResults($address: String!){
-  identity(address: $address, network: ETH) {
-    address
-    domain
-    social {
-      twitter
-    }
-    avatar
-    joinTime
-    followerCount(namespace: "CyberConnect")
-    followingCount(namespace: "CyberConnect")
-    followings(namespace: "CyberConnect") {
-      list {
-        address
-        domain
-        avatar
-        alias
-        namespace
-        lastModifiedTime
-        verifiable
-      } 
-    }
-    followers(namespace: "CyberConnect") {
-      list {
-        address
-        domain
-        avatar
-        alias
-        namespace
-        lastModifiedTime
-        verifiable
-      } 
-    }
-    friends(namespace: "CyberConnect") {
-      list {
-        address
-        domain
-        avatar
-        alias
-        namespace
-        lastModifiedTime
-        verifiable
-      } 
-    }
-  }
-}
-`
+
 
 export const BASIC_INFO=`
 query BasicInfo($address: String!){
