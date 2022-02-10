@@ -13,13 +13,13 @@
       Followers:
       <ul>
         <li v-for="(item, index) in followers" :key="item.address">
-         {{index}} -- {{item.address}} --- {{item.domain}} !!! {{ mutualFollowQuery(address, item.address)}} 
+         {{index}} -- {{item.address}} --- {{item.domain}} !!! {{item.mutual}}
         </li>
       </ul>
       Followings:
       <ul>
         <li v-for="(item, index) in followings" :key="item.address">
-         {{index}} -- {{item.address}} --- {{item.domain}} 
+         {{index}} -- {{item.address}} --- {{item.domain}} !!! {{item.mutual}}
         </li>
       </ul>
       Friends:
@@ -28,22 +28,19 @@
          {{index}} -- {{item.address}} --- {{item.domain}} 
         </li>
       </ul>
+      Recommendations reason
+      <ul>
+        <li v-for="(item, index) in recommendations" :key="item.address">
+          {{index}} -- {{item.address}} --- {{item.recommendationReason}}
+        </li>
+      </ul>
   </div>
 </template>
 
 <script>
-import * as myModule from '../functions.js'
 
-/*
-query IdentityQuery{
-  identity(address: "0x148d59faf10b52063071eddf4aaf63a395f2d41c", network: ETH) {
-    domain
-  }
-}
-*/
-//import axios from 'axios'
-//import { DEMO, MUTUAL_FOLLOW_QUERY } from '../graphql/queries.js'
-//import { IDENTITY_QUERY } from '../graphql/queries.js'
+
+import * as myModule from "../functions.js"
 export default {
   name: 'HelloWorld',
   data() {
@@ -53,6 +50,7 @@ export default {
       totalFollowers: 0,
       followers: [],
       followings: [],
+      recommendations: [],
       friends: [],
       options: {},
       loading: true,
@@ -67,62 +65,54 @@ export default {
           value: 'domain'
         }
       ],
-      watch: {
-        options:{
-          handler(){
-            this.getDataFromApi()
-          },
-          deep: true,
-        },
+     
+    }
+  },
+  watch:{
+    followers: {
+      deep: true,
+      handler(){
+        console.log("Followers has changed")
       }
     }
   },
   methods: {
-    
+   
   },
   async mounted() {
-    /*
-    try {
-      var result = await axios({
-        method: "POST",
-        url: "https://api.cybertino.io/connect/",
-        headers: {
-          "Access-Control-Allow-Origin": "http://localhost:8081",
-          "Access-Control-Allow-Credentials": "true",
-          //"Access-Control-Allow-Methods": "GET,HEAD,OPTIONS,POST,PUT",
-          //"Access-Control-Allow-Headers": "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
-        },
-        data: {
-          query: DEMO
-        }
-      });
-      this.identity = result.data.data.identity.domain
-    } catch (error){
-      console.error(error)
-    }
+  /*
+     myModule.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 10,1).then(response =>{
+        console.log("Returned:",response)
+        this.followers = response.identity.followers.list
+        this.followings = response.identity.followings.list
+        this.friends = response.identity.friends.list
+        this.followers = myModule.assignMutualConnections(this.address,this.followers)
+        this.followings = myModule.assignMutualConnections(this.address,this.followings)
+     
+        
+     }) 
 
-    (async() => {
-      this.identity = await this.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 10,1)
+    
+    myModule.recommendationQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "SOCIAL", 10,1).then(response =>{
+      if (response != null)
+        this.recommendations = response.recommendations.data.list
     })
 
-    console.log(this.identity)
-    this.followers = this.identity.followers
-    this.followers.forEach(follower => this.loadMutualConn(this.address, follower.address))
-    //this.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 10,1)
-    //this.mutualFollowQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c","0xcfee57ac521e68759cea2020f7682ffc483bf4f3")
+    console.log(myModule.isValid("0x148d59faf10b52063071eddf4aaf63a395f2d41c"))
+    myModule.getBalance("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
     */
-   //myModule.getRecommendationList("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "SOCIAL")
-   //myModule.getRecommendationList("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "DEFI")
-   //myModule.getRecommendationList("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "NFT")
-   //myModule.getRecommendationList("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "GAME")
+   
 
-    myModule.createUniqueList("0x1169b2743c45864e2182849ca881e7df1868ea8f")
-    //myModule.getAllRecommendations("0xcfee57ac521e68759cea2020f7682ffc483bf4f3")
-    //console.log(Math.round(268.56))
+    myModule.getBalance("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
+    //myModule.getETHTransactions("0x63a9975ba31b0b9626b34300f7f627147df1f526")
+    //console.log(res.data.result)
+    //myModule.getERC20Tokens("0x63a9975ba31b0b9626b34300f7f627147df1f526")
+    //myModule.getNFTTokens("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
 
-    //myModule.getPoapTokens("0x983110309620d911731ac0932219af06091b6744")
+    //myModule.getRecommendationList("0x8ddD03b89116ba89E28Ef703fe037fF77451e38E", "SOCIAL")
   }
   
+    
   
 }
 </script>
