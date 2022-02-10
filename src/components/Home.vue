@@ -1,5 +1,5 @@
 <template>
-  <v-container class="fill-height main-body" :style="styleObject">
+  <v-container class="fill-height main-body">
     <v-row>
       <v-col cols="6">
         <div class="display-3 font-weight-black spacing">
@@ -7,7 +7,7 @@
           <br />
           <span class="topal">WEB3</span> NOW
         </div>
-        <div class="body-1 mt-3" style="color: #59596a">
+        <div class="body-1 mt-3">
           CyberConnect is the world's first decentralized social
           <br />
           graph protocol that aims to liberate social connections
@@ -32,13 +32,7 @@
 export default {
   name: 'HelloWorld',
 
-  data: () => ({
-    // baseBgImage: '../assets/imgs/-MAIN COMP_00',
-    // styleObject: {
-    //   backgroundImage: `url('../assets/imgs/-MAIN COMP_00000.png')`,
-    // },
-    imgIndex: 0,
-  }),
+  data: () => ({}),
   methods: {
     focusSearchBar() {
       if (
@@ -53,20 +47,6 @@ export default {
       });
     },
   },
-  mounted() {
-    setInterval(function () {
-      if (this.imgIndex <= 174) {
-        this.styleObject.backgroundImage = this.baseBgImage;
-        if (this.imgIndex < 10) {
-          this.styleObject.backgroundImage += '00';
-        } else if (this.imgIndex >= 10 && this.imgIndex < 100) {
-          this.styleObject.backgroundImage += '0';
-        }
-        this.styleObject.backgroundImage += this.imgIndex + '.png';
-        this.imgIndex += 2;
-      }
-    }, 1000);
-  },
 };
 </script>
 
@@ -75,7 +55,8 @@ export default {
   padding-right: 15vw !important;
   padding-left: 15vw !important;
   max-width: unset !important;
-  /* background-image: url('../assets/imgs/-MAIN COMP_00174.png') !important; */
+  background-image: url('../assets/bg.svg') !important;
+  background-position: right center;
 }
 
 .topal {

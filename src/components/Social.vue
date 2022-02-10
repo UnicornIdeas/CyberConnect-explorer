@@ -1,5 +1,5 @@
 <template>
-  <v-container class="fill-height main-body pt-12">
+  <v-container class="fill-height main-body pt-12" id="renderContainer">
     <v-row justify="space-between">
       <v-col cols="3">
         <!-- user card -->
@@ -122,11 +122,27 @@
             class="background-card"
           />
         </div>
+
+        <v-switch
+          v-if="loading === false"
+          v-model="graphView"
+          inset
+          class="mt-12"
+          label="Graph view"
+          color="red"
+          style="position: relative; z-index: 1"
+        />
+        <div v-else class="mt-12">Loading more connections...</div>
       </v-col>
 
       <!-- connections table -->
-      <v-col cols="8">
-        <v-radio-group v-model="radio" row dark>
+      <v-col cols="8" v-if="graphView === false">
+        <v-radio-group
+          v-model="radio"
+          row
+          dark
+          style="position: relative; z-index: 2"
+        >
           <v-radio
             label="All"
             value="all"
@@ -471,6 +487,9 @@
 
 <script>
 import * as social from '../functions.js';
+import Graph from 'graphology';
+import Sigma from 'sigma';
+import ForceSupervisor from 'graphology-layout-force/worker';
 
 export default {
   data() {
@@ -499,6 +518,11 @@ export default {
       ],
       radio: 'all',
       filterRule: '',
+      graphView: false,
+      loading: false,
+      renderer: null,
+      graph: null,
+      container: null,
     };
   },
 
@@ -512,12 +536,15 @@ export default {
       this.cardtop = `${this.$refs['cardref'].$el.offsetTop}px`;
     },
     async getIdentity() {
+      this.graphView = false;
       this.radio = 'all';
       let adr = this.$route.params.address;
       let resp = await social.identityQuery(adr, 50, 1);
       this.identity = resp.identity;
       this.connections = this.identity.followers.list;
+      this.loading = true;
       let list1 = await social.createUniqueList(adr);
+      this.loading = false;
       this.connections = list1;
     },
     formatDate(date) {
@@ -532,6 +559,77 @@ export default {
           address: newAddress,
         },
       });
+    },
+    getRndInteger(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    buildGraph() {
+      this.graph.addNode('n1', {
+        x: 0,
+        y: 0,
+        size: 30,
+        color: 'red',
+        label:
+          this.identity.domain !== '' && this.identity.domain !== undefined
+            ? this.identity.domain
+            : this.identity.address,
+      });
+
+      let l = this.connections.length;
+      for (let i = 0; i < l; i++) {
+        if (this.connections[i].address === this.identity.address) {
+          continue;
+        }
+
+        let item = this.connections[i];
+        let color = 'green';
+        let label =
+          this.connections[i].domain !== '' &&
+          this.connections[i].domain !== undefined
+            ? this.connections[i].domain
+            : this.connections[i].address;
+
+        if (item.isFollower === true && item.isFollowing === true) {
+          color = 'blue';
+          label += '[mutual following]';
+        }
+
+        if (item.isFollower === true && item.isFollowing === false) {
+          color = 'yellow';
+          label += '[follower]';
+        }
+
+        if (item.isFollower === false && item.isFollowing === true) {
+          color = 'purple';
+          label += '[following]';
+        }
+
+        if (item.hasETHTransaction === true) {
+          color = 'grey';
+          label += '[transacted eth]';
+        }
+
+        if (item.hasNFTTransaction === true) {
+          color = 'pink';
+          label += '[transacted nft]';
+        }
+
+        if (item.hasERC20Token === true) {
+          color = 'orange';
+          label += '[transacted erc20]';
+        }
+        // `n${i + 2}`
+        this.graph.addNode(`${this.connections[i].address}`, {
+          size: 7,
+          x: this.getRndInteger(-300, 300),
+          y: this.getRndInteger(-300, 300),
+          label: label,
+          color: color,
+        });
+        // if (l < 300) {
+        //   this.graph.addEdge('n1', `${this.connections[i].address}`);
+        // }
+      }
     },
   },
   computed: {
@@ -640,6 +738,14 @@ export default {
     currentAddress() {
       this.getIdentity();
     },
+    graphView(newVal) {
+      if (newVal === true) {
+        this.buildGraph();
+      } else if (newVal === false) {
+        this.renderer.graph.clear();
+        this.renderer.refresh();
+      }
+    },
   },
   mounted() {
     this.resizeObserver = new ResizeObserver(this.cardresize);
@@ -647,6 +753,70 @@ export default {
     this.cardresize();
     this.cardreposition();
     window.onresize = this.cardreposition;
+
+    //init graph
+    this.container = document.getElementById('renderContainer');
+    this.graph = new Graph();
+    this.renderer = new Sigma(this.graph, this.container, {
+      renderEdgeLabels: true,
+      defaultLabelColor: '#fff',
+    });
+
+    let draggedNode = null;
+    let isDragging = false;
+
+    this.renderer.on(
+      'clickNode',
+      function (e) {
+        if (e.node !== 'n1') {
+          this.$router.push({
+            name: 'search',
+            params: {
+              address: e.node,
+            },
+          });
+        }
+      }.bind(this)
+    );
+
+    this.renderer.on('downNode', (e) => {
+      isDragging = true;
+      draggedNode = e.node;
+      this.graph.setNodeAttribute(draggedNode, 'highlighted', true);
+      this.renderer.getCamera().disable();
+    });
+
+    // On mouse move, if the drag mode is enabled, we change the position of the draggedNode
+    this.renderer.getMouseCaptor().on('mousemovebody', (e) => {
+      if (!isDragging || !draggedNode) return;
+
+      // Get new position of node
+      const pos = this.renderer.viewportToGraph(e);
+
+      this.graph.setNodeAttribute(draggedNode, 'x', pos.x);
+      this.graph.setNodeAttribute(draggedNode, 'y', pos.y);
+    });
+
+    // On mouse up, we reset the autoscale and the dragging mode
+    this.renderer.getMouseCaptor().on('mouseup', () => {
+      if (draggedNode) {
+        this.graph.removeNodeAttribute(draggedNode, 'highlighted');
+      }
+      isDragging = false;
+      draggedNode = null;
+      this.renderer.getCamera().enable();
+    });
+
+    // Disable the autoscale at the first down interaction
+    this.renderer.getMouseCaptor().on('mousedown', () => {
+      if (!this.renderer.getCustomBBox())
+        this.renderer.setCustomBBox(this.renderer.getBBox());
+    });
+
+    const layout = new ForceSupervisor(this.graph, {
+      isNodeFixed: (_, attr) => attr.highlighted,
+    });
+    layout.start();
   },
   created() {
     this.getIdentity();

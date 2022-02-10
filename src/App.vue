@@ -139,7 +139,7 @@ export default {
   border-radius: 0px !important;
 }
 
-.v-input::after,
+/* .v-input::after,
 .v-input::before,
 .v-input__control::after,
 .v-input__control::before {
@@ -150,7 +150,7 @@ export default {
   background: #b4b4bb;
   transition: 1s;
   mix-blend-mode: hue;
-}
+} */
 
 .v-input:before {
   top: -2px;

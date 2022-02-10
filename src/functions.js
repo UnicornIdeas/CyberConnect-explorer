@@ -144,14 +144,45 @@ function runTask(spec){
     return identityQuery(spec.address, spec.itemsPerPage, spec.page)
 }
 
+function getPoaps(spec){
+    return getPoapRecommendation(spec.eventId)
+}
+
 export async function getPoapTokens(address){
+    let poapList = []
     let api = "http://api.poap.xyz/actions/scan/" + address
     const res = await axios.get(api)
     res.data.forEach(element => getPoapRecommendation(element.event.id))
     //getPoapRecommendation("21917")
+    console.log("User poaps: ",res)
+    let thingsToDo = []
+    res.data.forEach(element => {
+        thingsToDo.push({eventId: element.event.id})
+        
+    })
+   
+    let chunck=10
+    var i
+ 
+    if (thingsToDo.length > 0){
+        chunck = 10
+    } else {
+        chunck = thingsToDo.length
+    }
+   
+    for (i=0; i<thingsToDo.length; i += chunck) {
+        let temp = thingsToDo.slice(i, i+chunck)
+        let tasks = temp.map(getPoaps)
+        let results = await Promise.all(tasks)
+        results.forEach(result => {
+            poapList = poapList.concat(result)
+        })
+    }
+    poapList = [...new Set(poapList)]
+    return poapList
 }
 
-async function getPoapRecommendation(eventID){
+export async function getPoapRecommendation(eventID){
     //var recList = []
     const query = POAP_RECCOMENDATIONS
     const variables ={
@@ -166,7 +197,16 @@ async function getPoapRecommendation(eventID){
                 variables: variables
             },
         });
-     console.log(result)
+      
+        var recList = []
+        let reccs = result.data.data.event
+        if (reccs != null){
+            reccs.tokens.forEach(token =>{
+                recList.push(token.owner.id)
+            })
+        }
+       
+        return recList
     } catch(error){
         console.log(error)
         return {}
@@ -181,6 +221,7 @@ function createElement(address, field, element=null){
     newElem.hasERC20Token = false
     newElem.hasETHTransaction = false
     newElem.hasNFTTransaction = false
+    newElem.hasSamePoap = false
     switch(field){
         case 'isFollowing': 
         if (element != null){
@@ -215,7 +256,9 @@ function createElement(address, field, element=null){
             newElem.address = address
             newElem.hasNFTTransaction = true
             break;
-            
+        case 'hasSamePoap':
+            newElem.address = address
+            newElem.hasSamePoap = true
         
     }
    return newElem
@@ -297,7 +340,7 @@ export async function createUniqueList(address){
         let res = await Promise.all(tasks )
         res.forEach(x => {
             if (parseFollowers){
-                let newList = x.identity.followers.list.map(obj => ({...obj, isFollower: true, isFollowing: false, hasETHTransaction: false, hasNFTTransaction: false, hasERC20Token: false, isRecommended: false}))
+                let newList = x.identity.followers.list.map(obj => ({...obj, isFollower: true, isFollowing: false, hasETHTransaction: false, hasNFTTransaction: false, hasERC20Token: false, isRecommended: false, hasSamePoap: false}))
                 followersList = followersList.concat(newList)
                 followingsList = followingsList.concat(x.identity.followings.list)
             }
@@ -339,11 +382,16 @@ export async function createUniqueList(address){
     followersList = removeDuplicates(followersList)
   
 
+    // let poapTokens = await getPoapTokens(address)
+    // followersList = await compare(followersList, poapTokens, address, false, "poap")
+
     console.log("FINAL: ", followersList)
     console.log("follower count", followerCount)
+    console.log("reccs: ", recommendationsList.length)
     console.log("eth list: ", ethList.length)
     console.log("erc20list: ", erc20tokenList.length)
     console.log("nft tokens: ", nftTokens.length)
+    // console.log("poap tokens: ", poapTokens.length)
     
     
     return followersList
@@ -398,6 +446,16 @@ function searchAddress(spec){
         }
         else 
             return [-1, address, token]
+    } else if (platform == "poap"){
+        let address = spec.address
+        let found = array.find(element => element.address === address)
+        if (found){
+            let foundElement = (element) => element.address == address
+            let indexElement = array.findIndex(foundElement)
+            return [indexElement, address]
+        } else {
+            return [-1, address]
+        }
     }
 }
 
@@ -429,6 +487,8 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                 asyncThingsTodo.push({from: followingsArray[i].from, to: followingsArray[i].to, original: searchedAddress, array: followersArray, action: action})
             } else if (action=="erc20token"){
                 asyncThingsTodo.push({address: followingsArray[i].to, token: followingsArray[i].tokenName, array:followersArray, action:action})
+            } else if (action == "poap"){
+                asyncThingsTodo.push({address: followingsArray[i], array: followersArray, action:action})
             }
         }
         let tasks = asyncThingsTodo.map(searchAddress)
@@ -500,8 +560,21 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                             let element = createElement(x[1], 'hasERC20Token', x[2])
                             followersArray.push(element)
                             break;
-                        }       
-                }  
+                        }
+                    case "poap":
+                        if (x[0] != -1){
+                            console.log("update with poap: ", x[0])
+                            updatedElem = followersArray[x[0]]
+                            updatedElem.hasSamePoap = true
+                            followersArray[x[0]] = updatedElem
+                            break;
+                        } else {
+                            console.log("create new Poap connection")
+                            let newElem = createElement(x[1], 'hasSamePoap')
+                            followersArray.push(newElem)
+                        }
+                }
+            
         })
         processed = processed + step
     } 
