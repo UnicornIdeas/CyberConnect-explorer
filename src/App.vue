@@ -1,5 +1,6 @@
 <template>
   <v-app>
+    <notifications group="foo" />
     <v-app-bar class="app_bar_margin" app color="primary" dark elevation="0">
       <v-app-bar-nav-icon>
         <v-img
@@ -10,6 +11,8 @@
       </v-app-bar-nav-icon>
       <v-app-bar-title> CyberConnect </v-app-bar-title>
       <v-text-field
+        ref="tField"
+        v-model="address"
         filled
         flat
         solo
@@ -17,7 +20,11 @@
         dense
         placeholder="Search address"
         append-icon="mdi-magnify"
-        background-color="#25252f"
+        :background-color="inputbg"
+        @mouseenter="hover(true)"
+        @mouseleave="hover(false)"
+        @keypress="search"
+        @blur="leaveFocus"
       />
     </v-app-bar>
 
@@ -28,12 +35,76 @@
 </template>
 
 <script>
+import { isValid } from './functions';
+
 export default {
   name: 'App',
 
   data: () => ({
-    //
+    inputbg: '#25252f',
+    address: '',
   }),
+  methods: {
+    hover(val) {
+      if (val) {
+        this.inputbg = '#39394b';
+      } else {
+        this.inputbg = '#25252f';
+      }
+    },
+    search(evt) {
+      if (evt.code === 'Enter') {
+        let rez = isValid(this.address);
+        if (rez === false) {
+          this.$notify({
+            group: 'foo',
+            title: 'Error',
+            text: 'The searched address is invalid!',
+            type: 'error',
+          });
+        } else {
+          this.$router.push({
+            name: 'search',
+            params: {
+              address: this.address,
+            },
+          });
+        }
+      }
+    },
+    leaveFocus() {
+      if (this.isFocused === false) {
+        return;
+      }
+      this.$router.push({
+        name: 'home',
+      });
+    },
+  },
+  computed: {
+    isFocused() {
+      return (
+        this.$route.query.focused === true ||
+        this.$route.query.focused === 'true'
+      );
+    },
+  },
+  watch: {
+    isFocused(val) {
+      if (val === true) {
+        this.$refs.tField.$refs.input.focus();
+      } else {
+        this.$refs.tField.$refs.input.blur();
+      }
+    },
+  },
+  mounted() {
+    this.$nextTick(() => {
+      if (this.$route.query.focused === 'true') {
+        this.$refs.tField.$refs.input.focus();
+      }
+    });
+  },
 };
 </script>
 

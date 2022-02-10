@@ -87,12 +87,10 @@ async function basicInfo(address){
     return result
 }
 
-/*
 export function isValid(address){
     let result = web3.utils.isAddress(address)
     return result
 }
-*/
 
 export async function getBalance(address){
     let params = {
@@ -157,7 +155,6 @@ function createElement(address, field, element=null){
     newElem.hasETHTransaction = false
     newElem.hasNFTTransaction = false
     switch(field){
-        
         case 'isFollowing': 
         if (element != null){
             newElem.address = element.address
@@ -311,7 +308,7 @@ export async function createUniqueList(address){
     console.log("nft tokens: ", nftTokens.length)
     
     
-    //return followersList
+    return followersList
     
 }
 
@@ -443,8 +440,6 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                             followersArray.push(element)
                             break;
                         }
-                        
-              
                     case "erc20token":
                         
                         if (x[0] != -1){
@@ -457,14 +452,11 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                             let element = createElement(x[1], 'hasERC20Token', x[2])
                             followersArray.push(element)
                             break;
-                        }
-                        
-                }
-            
+                        }       
+                }  
         })
         processed = processed + step
     } 
-    
     return followersArray
 }
 

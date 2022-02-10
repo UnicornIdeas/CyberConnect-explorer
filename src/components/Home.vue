@@ -1,5 +1,5 @@
 <template>
-  <v-container class="fill-height main-body">
+  <v-container class="fill-height main-body" :style="styleObject">
     <v-row>
       <v-col cols="6">
         <div class="display-3 font-weight-black spacing">
@@ -14,7 +14,13 @@
           <br />
           on Web3
         </div>
-        <v-btn class="btn-style mt-8" color="error" dark x-large>
+        <v-btn
+          class="btn-style mt-8"
+          color="error"
+          dark
+          x-large
+          @click="focusSearchBar"
+        >
           Search Address
         </v-btn>
       </v-col>
@@ -26,7 +32,41 @@
 export default {
   name: 'HelloWorld',
 
-  data: () => ({}),
+  data: () => ({
+    baseBgImage: '../assets/imgs/-MAIN COMP_00',
+    styleObject: {
+      backgroundImage: `url('../assets/imgs/-MAIN COMP_00000.png')`,
+    },
+    imgIndex: 0,
+  }),
+  methods: {
+    focusSearchBar() {
+      if (
+        this.$route.query.focused === true ||
+        this.$route.query.focused === 'true'
+      ) {
+        return;
+      }
+      this.$router.push({
+        name: 'home',
+        query: { focused: true },
+      });
+    },
+  },
+  mounted() {
+    setInterval(function () {
+      if (this.imgIndex <= 174) {
+        this.styleObject.backgroundImage = this.baseBgImage;
+        if (this.imgIndex < 10) {
+          this.styleObject.backgroundImage += '00';
+        } else if (this.imgIndex >= 10 && this.imgIndex < 100) {
+          this.styleObject.backgroundImage += '0';
+        }
+        this.styleObject.backgroundImage += this.imgIndex + '.png';
+        this.imgIndex += 2;
+      }
+    }, 1000);
+  },
 };
 </script>
 
@@ -35,6 +75,7 @@ export default {
   padding-right: 15vw !important;
   padding-left: 15vw !important;
   max-width: unset !important;
+  background-image: url('../assets/imgs/-MAIN COMP_00174.png') !important;
 }
 
 .topal {
