@@ -1,5 +1,5 @@
 import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
- import {  MUTUAL_FOLLOW_QUERY, RECOMMENDATION_QUERY } from './graphql/queries.js'
+ import {  MUTUAL_FOLLOW_QUERY, RECOMMENDATION_QUERY, POAP_RECCOMENDATIONS } from './graphql/queries.js'
 
  import axios from 'axios'
  const web3 = require('web3')
@@ -170,12 +170,7 @@ async function getPoapRecommendation(eventID){
                 variables: variables
             },
         });
-        console.log("resultt: ", result.data.data.event)
-        /*
-        if (result.data.data.event != null){
-            recList = recList.append(result.data.data.event.tokens)
-        }
-        */
+     console.log(result)
     } catch(error){
         console.log(error)
         return {}
@@ -318,54 +313,36 @@ export async function createUniqueList(address){
             
             }
             
-            
-            console.log("followerslength: ",followersList.length)
-            console.log("followingsLength: ", followingsList.length)
+           
             
         })
         currentPage = currentPage + step
-        console.log("Am ramas la: ", currentPage)
+     
     }
     
-    console.log("before comparations : ",followersList.length)
+  
     followersList = await compare(followersList, followingsList,address, true, "cyberconnect")
-    console.log("added followings: ",followersList)
-    
+ 
     
     let recommendationsList = await getAllRecommendations(address)
-    console.log("recommendation list length: ", recommendationsList.length)
     followersList = await compare(followersList, recommendationsList, address, false, "recommendations")
-    console.log("after recommendations: ", followersList)
+   
     
-    followersList = followersList.filter((value, index, self) =>
-        index === self.findIndex((t) => (
-            t.address === value.address
-        ))
-    )
-    console.log("remove dup: ", followersList)
+    followersList = removeDuplicates(followersList)
+    
 
     let ethList = await getETHTransactions(address)
-    //console.log(" eth transactions",ethList.length)
     followersList = await compare(followersList, ethList, address, false, "eth" )
-    console.log("after eth: ", followersList)
-
     followersList = removeDuplicates(followersList)
-    console.log("remove dup after eth: ", followersList)
-
-    
+   
     let erc20tokenList = await getERC20Tokens(address)
     followersList = await compare(followersList, erc20tokenList, address, false, "erc20token" )
-    console.log("afterERC20: ", followersList)
-
     followersList = removeDuplicates(followersList)
-    console.log("remove dup after erc20: ", followersList)
     
     let nftTokens = await getNFTTokens(address)
     followersList = await compare(followersList, nftTokens, address, false, "nft")
-    console.log("after nft: ", followersList)
-    
     followersList = removeDuplicates(followersList)
-    console.log("remove dup after nft: ", followersList)
+  
 
     console.log("FINAL: ", followersList)
     console.log("follower count", followerCount)
@@ -397,27 +374,22 @@ function searchAddress(spec){
         let from_address = spec.from
         let to_address = spec.to
         let original = spec.original
-        console.log("f: ", from_address, "t: ", to_address, "original: ", original)
-        //let address = ''
+       
         let for_address = ''
         if (from_address==original){
-            //let address = to_address
             for_address = to_address
         }else {
-            //let address = from_address
             for_address = from_address
         }
-        //console.log("original ", original, address)
+
         let found = array.find(element => element.address === for_address)
         
         let indexElement = -1 
         if (found){
             let foundElement = (element) => element.address == for_address
             indexElement = array.findIndex(foundElement)
-            console.log("found: ", found, "indexElement: ", indexElement, "to update: ", for_address)
             return [indexElement, for_address]
         } 
-        console.log("create eth for: ", for_address)
         return [-1, for_address]
     } else if (platform=="erc20token"){
         let address = spec.address

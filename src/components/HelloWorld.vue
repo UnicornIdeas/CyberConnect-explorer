@@ -103,13 +103,14 @@ export default {
     */
    
 
-    myModule.getBalance("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
+    //myModule.getBalance("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
     //myModule.getETHTransactions("0x63a9975ba31b0b9626b34300f7f627147df1f526")
     //console.log(res.data.result)
     //myModule.getERC20Tokens("0x63a9975ba31b0b9626b34300f7f627147df1f526")
     //myModule.getNFTTokens("0x148d59faf10b52063071eddf4aaf63a395f2d41c")
 
     //myModule.getRecommendationList("0x8ddD03b89116ba89E28Ef703fe037fF77451e38E", "SOCIAL")
+    myModule.createUniqueList("0x1169b2743c45864e2182849ca881e7df1868ea8f")
   }
   
     
