@@ -17,24 +17,25 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
   }
 
     async function axiosRequest(query, variables){
-    try{
-        var result = await axios({
-            method: "POST",
-            url:  "https://api.cybertino.io/connect/",
-            data: {
-                query: query,
-                variables: variables
-            },
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json'
-                //"Access-Control-Allow-Origin": "*",
-                //"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-                //no cors mode
-                //"Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-        
-              }
-        });
+        const proxy_url = 'https://cors-anywhere.herokuapp.com/'
+        try{
+            var result = await axios({
+                method: "POST",
+                url:  proxy_url+"https://api.cybertino.io/connect/",
+                data: {
+                    query: query,
+                    variables: variables
+                },
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                    //"Access-Control-Allow-Origin": "*",
+                    //"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+                    //no cors mode
+                    //"Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+            
+                }
+            });
         return result.data.data
     } catch(error){
         console.log(error)

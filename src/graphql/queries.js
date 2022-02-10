@@ -131,7 +131,6 @@ query BasicInfo($address: String!){
     joinTime
     followerCount(namespace: "CyberConnect")
     followingCount(namespace: "CyberConnect")
-    
   }
 }
 `
