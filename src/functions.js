@@ -17,11 +17,10 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
   }
 
     async function axiosRequest(query, variables){
-        const proxy_url = 'https://cors-anywhere.herokuapp.com/'
         try{
             var result = await axios({
                 method: "POST",
-                url:  proxy_url+"https://api.cybertino.io/connect/",
+                url:  "https://api.cybertino.io/connect/",
                 data: {
                     query: query,
                     variables: variables
