@@ -132,6 +132,20 @@ query BasicInfo($address: String!){
     followerCount(namespace: "CyberConnect")
     followingCount(namespace: "CyberConnect")
     
+  }
 }
+`
+
+export const POAP_RECCOMENDATIONS=`
+query Recommendations($id: ID!)
+{
+    event(id: $id ) {
+        tokens {
+            id
+            owner {
+                id
+            }
+        }
+    }
 }
 `

@@ -1,5 +1,5 @@
 import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
- import {  MUTUAL_FOLLOW_QUERY, RECOMMENDATION_QUERY } from './graphql/queries.js'
+ import {  MUTUAL_FOLLOW_QUERY, RECOMMENDATION_QUERY, POAP_RECCOMENDATIONS } from './graphql/queries.js'
 
  import axios from 'axios'
  const web3 = require('web3')
@@ -103,9 +103,8 @@ export async function getBalance(address){
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
     const res = await axios.get("https://api.etherscan.io/api", {params: params})
-    console.log(res)
     let eth = web3.utils.fromWei(res.data.result, "ether")
-    console.log(eth)
+    return eth
 }
 
 export async function getPoapTokens(address){
@@ -153,6 +152,73 @@ function runTask(spec){
     return identityQuery(spec.address, spec.itemsPerPage, spec.page)
 }
 
+function getPoaps(spec){
+    return getPoapRecommendation(spec.eventId)
+}
+
+export async function getPoapTokens(address){
+    let poapList = []
+    let api = "http://api.poap.xyz/actions/scan/" + address
+    const res = await axios.get(api)
+    console.log("User poaps: ",res)
+    let thingsToDo = []
+    res.data.forEach(element => {
+        thingsToDo.push({eventId: element.event.id})
+        
+    })
+   
+    let chunck=10
+    var i
+ 
+    if (thingsToDo.length > 0){
+        chunck = 10
+    } else {
+        chunck = thingsToDo.length
+    }
+   
+    for (i=0; i<thingsToDo.length; i += chunck) {
+        let temp = thingsToDo.slice(i, i+chunck)
+        let tasks = temp.map(getPoaps)
+        let results = await Promise.all(tasks)
+        results.forEach(result => {
+            poapList = poapList.concat(result)
+        })
+    }
+    poapList = [...new Set(poapList)]
+    return poapList
+}
+
+export async function getPoapRecommendation(eventID){
+    //var recList = []
+    const query = POAP_RECCOMENDATIONS
+    const variables ={
+        id: eventID
+    }
+    try{
+        var result = await axios({
+            method: "POST",
+            url:  "https://api.thegraph.com/subgraphs/name/poap-xyz/poap",
+            data: {
+                query: query,
+                variables: variables
+            },
+        });
+      
+        var recList = []
+        let reccs = result.data.data.event
+        if (reccs != null){
+            reccs.tokens.forEach(token =>{
+                recList.push(token.owner.id)
+            })
+        }
+       
+        return recList
+    } catch(error){
+        console.log(error)
+        return {}
+    }
+}
+
 function createElement(address, field, element=null){
     let newElem = {}
     newElem.isFollowing = false
@@ -161,6 +227,7 @@ function createElement(address, field, element=null){
     newElem.hasERC20Token = false
     newElem.hasETHTransaction = false
     newElem.hasNFTTransaction = false
+    newElem.hasSamePoap = false
     switch(field){
         
         case 'isFollowing': 
@@ -196,7 +263,9 @@ function createElement(address, field, element=null){
             newElem.address = address
             newElem.hasNFTTransaction = true
             break;
-            
+        case 'hasSamePoap':
+            newElem.address = address
+            newElem.hasSamePoap = true
         
     }
    return newElem
@@ -208,7 +277,6 @@ export async function getRecommendationList(address, filter){
     let after = 1
     //let data = ""
     let reccList = []
-    
     let hasNext = true
 
     while (hasNext){
@@ -247,9 +315,10 @@ export async function getAllRecommendations(address){
 export async function createUniqueList(address){
     let result = await basicInfo(address)
     let followerCount = result.identity.followerCount
-    console.log(followerCount)
+    console.log(result.identity.domain)
+    console.log("followers: ",followerCount)
     let followingsCount = result.identity.followingCount
-    console.log(followingsCount)
+    console.log("followings: ",followingsCount)
 
     let followersList = []
     let followingsList = []
@@ -260,6 +329,8 @@ export async function createUniqueList(address){
     let currentPage = 1
     let step =0
     console.log("total pages: ", totalPages)
+    if (totalPages == 1)
+        currentPage = 0
     while (currentPage < totalPages ){
         if (totalPages - currentPage >= 20){
             step = 20
@@ -276,7 +347,7 @@ export async function createUniqueList(address){
         let res = await Promise.all(tasks )
         res.forEach(x => {
             if (parseFollowers){
-                let newList = x.identity.followers.list.map(obj => ({...obj, isFollower: true, isFollowing: false, hasETHTransaction: false, hasNFTTransaction: false, hasERC20Token: false, isRecommended: false}))
+                let newList = x.identity.followers.list.map(obj => ({...obj, isFollower: true, isFollowing: false, hasETHTransaction: false, hasNFTTransaction: false, hasERC20Token: false, isRecommended: false, hasSamePoap: false}))
                 followersList = followersList.concat(newList)
                 followingsList = followingsList.concat(x.identity.followings.list)
             }
@@ -286,34 +357,48 @@ export async function createUniqueList(address){
                 followersList = followersList.concat(x.identity.followers.list)
             
             }
+            
            
+            
         })
         currentPage = currentPage + step
+     
     }
-    followersList = await compare(followersList, followingsList,address, true, "cyberconnect")
     
+  
+    followersList = await compare(followersList, followingsList,address, true, "cyberconnect")
+ 
     
     let recommendationsList = await getAllRecommendations(address)
     followersList = await compare(followersList, recommendationsList, address, false, "recommendations")
+   
     
+    followersList = removeDuplicates(followersList)
     
+
     let ethList = await getETHTransactions(address)
-    //console.log(" eth transactions",ethList.length)
     followersList = await compare(followersList, ethList, address, false, "eth" )
-    //console.log("agaian: ", followersList)
-    
+    followersList = removeDuplicates(followersList)
+   
     let erc20tokenList = await getERC20Tokens(address)
     followersList = await compare(followersList, erc20tokenList, address, false, "erc20token" )
-    //console.log("agaiangfyusfgyus: ", followersList)
+    followersList = removeDuplicates(followersList)
     
     let nftTokens = await getNFTTokens(address)
     followersList = await compare(followersList, nftTokens, address, false, "nft")
-    
+    followersList = removeDuplicates(followersList)
+  
+
+    let poapTokens = await getPoapTokens(address)
+    followersList = await compare(followersList, poapTokens, address, false, "poap")
+
     console.log("FINAL: ", followersList)
     console.log("follower count", followerCount)
+    console.log("reccs: ", recommendationsList.length)
     console.log("eth list: ", ethList.length)
     console.log("erc20list: ", erc20tokenList.length)
     console.log("nft tokens: ", nftTokens.length)
+    console.log("poap tokens: ", poapTokens.length)
     
     
     //return followersList
@@ -338,23 +423,24 @@ function searchAddress(spec){
     } else if (platform=="eth" || platform=="nft"){
         let from_address = spec.from
         let to_address = spec.to
-        let original = spec.address
-        let address = ''
+        let original = spec.original
+       
+        let for_address = ''
         if (from_address==original){
-            address = to_address
+            for_address = to_address
         }else {
-            address = from_address
+            for_address = from_address
         }
 
-        let found = array.find(element => element.address === address)
+        let found = array.find(element => element.address === for_address)
         
         let indexElement = -1 
         if (found){
-            let foundElement = (element) => element.address == address
+            let foundElement = (element) => element.address == for_address
             indexElement = array.findIndex(foundElement)
-            return [indexElement, address]
+            return [indexElement, for_address]
         } 
-        return [-1, address]
+        return [-1, for_address]
     } else if (platform=="erc20token"){
         let address = spec.address
         let token = spec.token
@@ -367,7 +453,26 @@ function searchAddress(spec){
         }
         else 
             return [-1, address, token]
+    } else if (platform == "poap"){
+        let address = spec.address
+        let found = array.find(element => element.address === address)
+        if (found){
+            let foundElement = (element) => element.address == address
+            let indexElement = array.findIndex(foundElement)
+            return [indexElement, address]
+        } else {
+            return [-1, address]
+        }
     }
+}
+
+function removeDuplicates(arrayList){
+    arrayList = arrayList.filter((value, index, self) =>
+    index === self.findIndex((t) => (
+        t.address === value.address
+        ))
+    )
+    return arrayList
 }
 
 async function compare(followersArray, followingsArray, searchedAddress, followers, action){
@@ -389,6 +494,8 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                 asyncThingsTodo.push({from: followingsArray[i].from, to: followingsArray[i].to, original: searchedAddress, array: followersArray, action: action})
             } else if (action=="erc20token"){
                 asyncThingsTodo.push({address: followingsArray[i].to, token: followingsArray[i].tokenName, array:followersArray, action:action})
+            } else if (action == "poap"){
+                asyncThingsTodo.push({address: followingsArray[i], array: followersArray, action:action})
             }
         }
         let tasks = asyncThingsTodo.map(searchAddress)
@@ -463,7 +570,18 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                             followersArray.push(element)
                             break;
                         }
-                        
+                    case "poap":
+                        if (x[0] != -1){
+                            console.log("update with poap: ", x[0])
+                            updatedElem = followersArray[x[0]]
+                            updatedElem.hasSamePoap = true
+                            followersArray[x[0]] = updatedElem
+                            break;
+                        } else {
+                            console.log("create new Poap connection")
+                            let newElem = createElement(x[1], 'hasSamePoap')
+                            followersArray.push(newElem)
+                        }
                 }
             
         })
@@ -472,4 +590,3 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
     
     return followersArray
 }
-
