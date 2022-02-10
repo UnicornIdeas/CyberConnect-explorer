@@ -38,7 +38,6 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
             });
         return result.data.data
     } catch(error){
-        console.log(error)
         return {}
     }
   }
@@ -97,12 +96,10 @@ async function basicInfo(address){
     return result
 }
 
-/*
 export function isValid(address){
     let result = web3.utils.isAddress(address)
     return result
 }
-*/
 
 export async function getBalance(address){
     let params = {
@@ -166,6 +163,8 @@ export async function getPoapTokens(address){
     let poapList = []
     let api = "http://api.poap.xyz/actions/scan/" + address
     const res = await axios.get(api)
+    res.data.forEach(element => getPoapRecommendation(element.event.id))
+    //getPoapRecommendation("21917")
     console.log("User poaps: ",res)
     let thingsToDo = []
     res.data.forEach(element => {
@@ -235,7 +234,6 @@ function createElement(address, field, element=null){
     newElem.hasNFTTransaction = false
     newElem.hasSamePoap = false
     switch(field){
-        
         case 'isFollowing': 
         if (element != null){
             newElem.address = element.address
@@ -395,8 +393,8 @@ export async function createUniqueList(address){
     followersList = removeDuplicates(followersList)
   
 
-    let poapTokens = await getPoapTokens(address)
-    followersList = await compare(followersList, poapTokens, address, false, "poap")
+    // let poapTokens = await getPoapTokens(address)
+    // followersList = await compare(followersList, poapTokens, address, false, "poap")
 
     console.log("FINAL: ", followersList)
     console.log("follower count", followerCount)
@@ -404,10 +402,10 @@ export async function createUniqueList(address){
     console.log("eth list: ", ethList.length)
     console.log("erc20list: ", erc20tokenList.length)
     console.log("nft tokens: ", nftTokens.length)
-    console.log("poap tokens: ", poapTokens.length)
+    // console.log("poap tokens: ", poapTokens.length)
     
     
-    //return followersList
+    return followersList
     
 }
 
@@ -561,8 +559,6 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
                             followersArray.push(element)
                             break;
                         }
-                        
-              
                     case "erc20token":
                         
                         if (x[0] != -1){
@@ -593,6 +589,5 @@ async function compare(followersArray, followingsArray, searchedAddress, followe
         })
         processed = processed + step
     } 
-    
     return followersArray
 }
