@@ -107,11 +107,7 @@ export async function getBalance(address){
     return eth
 }
 
-export async function getPoapTokens(address){
-    let api = "http://api.poap.xyz/actions/scan/" + address
-    const res = await axios.get(api)
-    console.log(res)
-}
+
 
 export async function getETHTransactions(address){
     let params = {
