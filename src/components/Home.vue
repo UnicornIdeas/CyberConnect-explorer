@@ -33,10 +33,10 @@ export default {
   name: 'HelloWorld',
 
   data: () => ({
-    baseBgImage: '../assets/imgs/-MAIN COMP_00',
-    styleObject: {
-      backgroundImage: `url('../assets/imgs/-MAIN COMP_00000.png')`,
-    },
+    // baseBgImage: '../assets/imgs/-MAIN COMP_00',
+    // styleObject: {
+    //   backgroundImage: `url('../assets/imgs/-MAIN COMP_00000.png')`,
+    // },
     imgIndex: 0,
   }),
   methods: {
@@ -75,7 +75,7 @@ export default {
   padding-right: 15vw !important;
   padding-left: 15vw !important;
   max-width: unset !important;
-  background-image: url('../assets/imgs/-MAIN COMP_00174.png') !important;
+  /* background-image: url('../assets/imgs/-MAIN COMP_00174.png') !important; */
 }
 
 .topal {

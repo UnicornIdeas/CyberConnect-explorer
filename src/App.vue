@@ -2,7 +2,7 @@
   <v-app>
     <notifications group="foo" />
     <v-app-bar class="app_bar_margin" app color="primary" dark elevation="0">
-      <v-app-bar-nav-icon>
+      <v-app-bar-nav-icon @click="goHome">
         <v-img
           max-height="30"
           max-width="30"
@@ -76,6 +76,11 @@ export default {
       if (this.isFocused === false) {
         return;
       }
+      this.$router.push({
+        name: 'home',
+      });
+    },
+    goHome() {
       this.$router.push({
         name: 'home',
       });

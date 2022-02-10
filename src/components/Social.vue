@@ -126,11 +126,53 @@
 
       <!-- connections table -->
       <v-col cols="8">
-        <v-data-table :items="connections" class="connections-table">
+        <v-radio-group v-model="radio" row dark>
+          <v-radio
+            label="All"
+            value="all"
+            :color="radio === 'all' ? 'red' : ''"
+          />
+          <v-radio
+            label="Followers"
+            value="followers"
+            :color="radio === 'followers' ? 'red' : ''"
+          ></v-radio>
+          <v-radio
+            label="Following"
+            value="following"
+            :color="radio === 'following' ? 'red' : ''"
+          />
+          <v-radio
+            label="Mutual"
+            value="mutual"
+            :color="radio === 'mutual' ? 'red' : ''"
+          />
+          <v-radio
+            label="ETH"
+            value="eth"
+            :color="radio === 'eth' ? 'red' : ''"
+          />
+          <v-radio
+            label="ERC20"
+            value="erc20"
+            :color="radio === 'erc20' ? 'red' : ''"
+          />
+          <v-radio
+            label="NFT"
+            value="nft"
+            :color="radio === 'nft' ? 'red' : ''"
+          />
+        </v-radio-group>
+        <v-data-table
+          :items="filteredItems"
+          class="connections-table"
+          :footer-props="{ 'items-per-page-options': [5, 10, 15] }"
+        >
           <template v-slot:item="{ item }">
             <v-card
               class="mb-6 connection-card pt-4 pb-4 pl-6 pr-6"
               elevation="0"
+              @click="changeAddress(item.address)"
             >
               <v-row justify="space-between" class="c-row">
                 <v-col cols="1">
@@ -176,22 +218,26 @@
 
                   <div class="mt-3">
                     <!-- CyberConnect relation -->
-                    <v-tooltip bottom>
+                    <v-tooltip bottom v-if="item.namespace === 'CyberConnect'">
                       <template v-slot:activator="{ on, attrs }">
                         <v-btn
+                          @click="
+                            (evt) => {
+                              evt.stopPropagation();
+                            }
+                          "
                           v-bind="attrs"
                           v-on="on"
-                          class="mx-2"
+                          class="mx-1"
                           fab
                           dark
                           x-small
                           color="primary"
                           style="float: right"
-                          v-if="item.namespace === 'CyberConnect'"
                           :href="`https://app.cyberconnect.me/address/${item.address}`"
                           target="_blank"
                         >
-                          <v-avatar size="36px">
+                          <v-avatar size="32px">
                             <img
                               src="https://images.cybertino.io/cyberconnect_logo"
                             />
@@ -203,6 +249,213 @@
                         {{
                           `https://app.cyberconnect.me/address/${item.address}`
                         }}
+                      </span>
+                    </v-tooltip>
+                    <!-- Follower relation-->
+                    <v-tooltip
+                      bottom
+                      v-if="
+                        item.isFollower === true && item.isFollowing === false
+                      "
+                    >
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          @click="
+                            (evt) => {
+                              evt.stopPropagation();
+                            }
+                          "
+                          v-bind="attrs"
+                          v-on="on"
+                          class="mx-1"
+                          fab
+                          dark
+                          x-small
+                          color="red"
+                          style="float: right"
+                        >
+                          <v-icon> mdi-cards-heart-outline </v-icon>
+                        </v-btn>
+                      </template>
+                      <span>
+                        {{ item.address }} <br />
+                        is following<br />
+                        {{ identity.address }}
+                      </span>
+                    </v-tooltip>
+                    <!-- Following relation-->
+                    <v-tooltip
+                      bottom
+                      v-if="
+                        item.isFollower === false && item.isFollowing === true
+                      "
+                    >
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          @click="
+                            (evt) => {
+                              evt.stopPropagation();
+                            }
+                          "
+                          v-bind="attrs"
+                          v-on="on"
+                          class="mx-1"
+                          fab
+                          dark
+                          x-small
+                          color="yellow"
+                          style="float: right"
+                        >
+                          <v-icon color="black">mdi-walk </v-icon>
+                        </v-btn>
+                      </template>
+                      <span>
+                        {{ identity.address }}<br />
+                        is following <br />
+                        {{ item.address }}
+                      </span>
+                    </v-tooltip>
+                    <!-- Mutual relation-->
+                    <v-tooltip
+                      bottom
+                      v-if="
+                        item.isFollower === true && item.isFollowing === true
+                      "
+                    >
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          @click="
+                            (evt) => {
+                              evt.stopPropagation();
+                            }
+                          "
+                          v-bind="attrs"
+                          v-on="on"
+                          class="mx-1"
+                          fab
+                          dark
+                          x-small
+                          color="blue"
+                          style="float: right"
+                        >
+                          <v-icon>mdi-handshake-outline </v-icon>
+                        </v-btn>
+                      </template>
+                      <span>
+                        {{ identity.address }} <br />
+                        and<br />
+                        {{ item.address }}<br />
+                        are following each other
+                      </span>
+                    </v-tooltip>
+                    <!-- Recommended -->
+                    <v-tooltip bottom v-if="item.isRecommended === true">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          @click="
+                            (evt) => {
+                              evt.stopPropagation();
+                            }
+                          "
+                          v-bind="attrs"
+                          v-on="on"
+                          class="mx-1"
+                          fab
+                          dark
+                          x-small
+                          color="purple"
+                          style="float: right"
+                        >
+                          <v-icon>mdi-plus-circle-multiple-outline </v-icon>
+                        </v-btn>
+                      </template>
+                      <span>
+                        {{ item.address }}<br />
+                        is a recommendation
+                      </span>
+                    </v-tooltip>
+                    <!-- ETH transaction -->
+                    <v-tooltip bottom v-if="item.hasETHTransaction === true">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          @click="
+                            (evt) => {
+                              evt.stopPropagation();
+                            }
+                          "
+                          v-bind="attrs"
+                          v-on="on"
+                          class="mx-1"
+                          fab
+                          dark
+                          x-small
+                          color="#a4fcf5"
+                          style="float: right"
+                        >
+                          <v-icon color="black"> mdi-ethereum</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>
+                        {{ identity.address }}<br />
+                        and<br />
+                        {{ item.address }}<br />
+                        transacted ETH
+                      </span>
+                    </v-tooltip>
+                    <!-- NFT transaction -->
+                    <v-tooltip bottom v-if="item.hasNFTTransaction === true">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          @click="
+                            (evt) => {
+                              evt.stopPropagation();
+                            }
+                          "
+                          v-bind="attrs"
+                          v-on="on"
+                          class="mx-1"
+                          fab
+                          dark
+                          x-small
+                          color="#f30cbd"
+                          style="float: right"
+                        >
+                          <v-icon> mdi-nativescript</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>
+                        {{ identity.address }}<br />
+                        and<br />
+                        {{ item.address }}<br />
+                        transacted a NFT
+                      </span>
+                    </v-tooltip>
+                    <!-- ERC20 transaction -->
+                    <v-tooltip bottom v-if="item.hasERC20Token === true">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          @click="
+                            (evt) => {
+                              evt.stopPropagation();
+                            }
+                          "
+                          v-bind="attrs"
+                          v-on="on"
+                          class="mx-1"
+                          fab
+                          dark
+                          x-small
+                          color="#ba9f33"
+                          style="float: right"
+                        >
+                          <v-icon color="black"> mdi-dog</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>
+                        {{ identity.address }}<br />
+                        and<br />
+                        {{ item.address }}<br />
+                        transacted an ERC20 token
                       </span>
                     </v-tooltip>
                   </div>
@@ -244,6 +497,8 @@ export default {
         'November',
         'December',
       ],
+      radio: 'all',
+      filterRule: '',
     };
   },
 
@@ -257,6 +512,7 @@ export default {
       this.cardtop = `${this.$refs['cardref'].$el.offsetTop}px`;
     },
     async getIdentity() {
+      this.radio = 'all';
       let adr = this.$route.params.address;
       let resp = await social.identityQuery(adr, 50, 1);
       this.identity = resp.identity;
@@ -268,6 +524,14 @@ export default {
       const d = new Date(date);
       const m = this.months[d.getMonth()];
       return `${m} ${d.getDate()}, ${d.getFullYear()}`;
+    },
+    changeAddress(newAddress) {
+      this.$router.push({
+        name: 'search',
+        params: {
+          address: newAddress,
+        },
+      });
     },
   },
   computed: {
@@ -326,6 +590,55 @@ export default {
         acc: this.identity.social.twitter,
         url: 'https://twitter.com/' + this.identity.social.twitter,
       };
+    },
+    currentAddress() {
+      return this.$route.params.address;
+    },
+    filteredItems() {
+      if (this.radio === 'all') {
+        return this.connections;
+      }
+
+      if (this.radio === 'followers') {
+        return this.connections.filter(
+          (item) => item.isFollower === true && item.isFollowing === false
+        );
+      }
+
+      if (this.radio === 'following') {
+        return this.connections.filter(
+          (item) => item.isFollowing === true && item.isFollower === false
+        );
+      }
+
+      if (this.radio === 'mutual') {
+        return this.connections.filter(
+          (item) => item.isFollowing === true && item.isFollower === true
+        );
+      }
+
+      if (this.radio === 'eth') {
+        return this.connections.filter(
+          (item) => item.hasETHTransaction === true
+        );
+      }
+
+      if (this.radio === 'nft') {
+        return this.connections.filter(
+          (item) => item.hasNFTTransaction === true
+        );
+      }
+
+      if (this.radio === 'erc20') {
+        return this.connections.filter((item) => item.hasERC20Token === true);
+      }
+
+      return this.connections;
+    },
+  },
+  watch: {
+    currentAddress() {
+      this.getIdentity();
     },
   },
   mounted() {
@@ -473,5 +786,9 @@ export default {
 .c-row::after {
   bottom: -2px;
   right: -2px;
+}
+
+.activeBtn {
+  color: red;
 }
 </style>
