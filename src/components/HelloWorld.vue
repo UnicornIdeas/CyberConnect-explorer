@@ -1,41 +1,129 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div >
+    Identity: {{identity}}
+
+    <v-data-table
+      :headers="headers"
+      :items="followers"
+      :options.sync="options"
+      :server-items-length="totalFollowers"
+      :loading="loading"
+
+      ></v-data-table>
+      Followers:
+      <ul>
+        <li v-for="(item, index) in followers" :key="item.address">
+         {{index}} -- {{item.address}} --- {{item.domain}} !!! {{ mutualFollowQuery(address, item.address)}} 
+        </li>
+      </ul>
+      Followings:
+      <ul>
+        <li v-for="(item, index) in followings" :key="item.address">
+         {{index}} -- {{item.address}} --- {{item.domain}} 
+        </li>
+      </ul>
+      Friends:
+       <ul>
+        <li v-for="(item, index) in friends" :key="item.address">
+         {{index}} -- {{item.address}} --- {{item.domain}} 
+        </li>
+      </ul>
   </div>
 </template>
 
 <script>
+import * as myModule from '../functions.js'
+
+/*
+query IdentityQuery{
+  identity(address: "0x148d59faf10b52063071eddf4aaf63a395f2d41c", network: ETH) {
+    domain
+  }
+}
+*/
+//import axios from 'axios'
+//import { DEMO, MUTUAL_FOLLOW_QUERY } from '../graphql/queries.js'
+//import { IDENTITY_QUERY } from '../graphql/queries.js'
 export default {
   name: 'HelloWorld',
-  props: {
-    msg: String
+  data() {
+    return {
+      address: "0x148d59faf10b52063071eddf4aaf63a395f2d41c",
+      identity: '',
+      totalFollowers: 0,
+      followers: [],
+      followings: [],
+      friends: [],
+      options: {},
+      loading: true,
+      headers: [
+        {
+          text: 'Address',
+          align: 'start',
+          value: 'follower'
+        },
+        {
+          text: 'Domain',
+          value: 'domain'
+        }
+      ],
+      watch: {
+        options:{
+          handler(){
+            this.getDataFromApi()
+          },
+          deep: true,
+        },
+      }
+    }
+  },
+  methods: {
+    
+  },
+  async mounted() {
+    /*
+    try {
+      var result = await axios({
+        method: "POST",
+        url: "https://api.cybertino.io/connect/",
+        headers: {
+          "Access-Control-Allow-Origin": "http://localhost:8081",
+          "Access-Control-Allow-Credentials": "true",
+          //"Access-Control-Allow-Methods": "GET,HEAD,OPTIONS,POST,PUT",
+          //"Access-Control-Allow-Headers": "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+        },
+        data: {
+          query: DEMO
+        }
+      });
+      this.identity = result.data.data.identity.domain
+    } catch (error){
+      console.error(error)
+    }
+
+    (async() => {
+      this.identity = await this.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 10,1)
+    })
+
+    console.log(this.identity)
+    this.followers = this.identity.followers
+    this.followers.forEach(follower => this.loadMutualConn(this.address, follower.address))
+    //this.identityQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c", 10,1)
+    //this.mutualFollowQuery("0x148d59faf10b52063071eddf4aaf63a395f2d41c","0xcfee57ac521e68759cea2020f7682ffc483bf4f3")
+    */
+   //myModule.getRecommendationList("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "SOCIAL")
+   //myModule.getRecommendationList("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "DEFI")
+   //myModule.getRecommendationList("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "NFT")
+   //myModule.getRecommendationList("0x148d59faf10b52063071eddf4aaf63a395f2d41c", "GAME")
+
+    myModule.createUniqueList("0x1169b2743c45864e2182849ca881e7df1868ea8f")
+    //myModule.getAllRecommendations("0xcfee57ac521e68759cea2020f7682ffc483bf4f3")
+    //console.log(Math.round(268.56))
+
+    //myModule.getPoapTokens("0x983110309620d911731ac0932219af06091b6744")
   }
+  
+  
 }
 </script>
 
