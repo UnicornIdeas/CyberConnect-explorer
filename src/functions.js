@@ -25,6 +25,13 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
                 query: query,
                 variables: variables
             },
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+                //no cors mode
+                "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+        
+              }
         });
         return result.data.data
     } catch(error){
