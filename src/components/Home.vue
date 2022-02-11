@@ -7,14 +7,20 @@
           <br />
           <span class="topal">WEB3</span> NOW
         </div>
-        <div class="body-1 mt-3" style="color: #59596a">
+        <div class="body-1 mt-3">
           CyberConnect is the world's first decentralized social
           <br />
           graph protocol that aims to liberate social connections
           <br />
           on Web3
         </div>
-        <v-btn class="btn-style mt-8" color="error" dark x-large>
+        <v-btn
+          class="btn-style mt-8"
+          color="error"
+          dark
+          x-large
+          @click="focusSearchBar"
+        >
           Search Address
         </v-btn>
       </v-col>
@@ -27,6 +33,20 @@ export default {
   name: 'HelloWorld',
 
   data: () => ({}),
+  methods: {
+    focusSearchBar() {
+      if (
+        this.$route.query.focused === true ||
+        this.$route.query.focused === 'true'
+      ) {
+        return;
+      }
+      this.$router.push({
+        name: 'home',
+        query: { focused: true },
+      });
+    },
+  },
 };
 </script>
 
@@ -35,6 +55,8 @@ export default {
   padding-right: 15vw !important;
   padding-left: 15vw !important;
   max-width: unset !important;
+  background-image: url('../assets/bg.svg') !important;
+  background-position: right center;
 }
 
 .topal {
