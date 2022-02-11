@@ -17,10 +17,11 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
   }
 
     async function axiosRequest(query, variables){
+        let proxy_heroku = "https://fast-wave-67731.herokuapp.com/"
     try{
         var result = await axios({
             method: "POST",
-            url:  "https://api.cybertino.io/connect/",
+            url:  proxy_heroku + "https://api.cybertino.io/connect/",
             data: {
                 query: query,
                 variables: variables
