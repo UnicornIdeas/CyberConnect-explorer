@@ -5,6 +5,8 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
  const web3 = require('web3')
  const proxy_heroku = "https://fast-wave-67731.herokuapp.com/"
 
+ const proxy_heroku = "https://fast-wave-67731.herokuapp.com/"
+
   export function assignMutualConnections(fromAddr, followers){
     var newfollowers=[]
     followers.forEach(element => {
@@ -18,23 +20,15 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
   }
 
     async function axiosRequest(query, variables){
+        
     try{
         var result = await axios({
             method: "POST",
-            url:  proxy_heroku+"https://api.cybertino.io/connect/",
+            url:  proxy_heroku + "https://api.cybertino.io/connect/",
             data: {
                 query: query,
                 variables: variables
             },
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-                // "Access-Control-Request-Headers":"content-type",
-                // "Access-Control-Request-Methods":"POST, OPTIONS",
-                //"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-                //no cors mode
-                //"Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-            }
         });
         return result.data.data
     } catch(error){
@@ -109,7 +103,7 @@ export async function getBalance(address){
         tag: 'latest',
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
-    const res = await axios.get("https://api.etherscan.io/api", {params: params})
+    const res = await axios.get(proxy_heroku + "https://api.etherscan.io/api", {params: params})
     let eth = web3.utils.fromWei(res.data.result, "ether")
     return eth
 }
@@ -125,7 +119,7 @@ export async function getETHTransactions(address){
         endblock: 99999999,
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
-    const res = await axios.get("https://api.etherscan.io/api", {params: params})
+    const res = await axios.get(proxy_heroku + "https://api.etherscan.io/api", {params: params})
     return res.data.result
 }
 
@@ -136,7 +130,7 @@ export async function getERC20Tokens(address){
         address: address,
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
-    const res = await axios.get("https://api.etherscan.io/api", {params: params})
+    const res = await axios.get(proxy_heroku + "https://api.etherscan.io/api", {params: params})
     return res.data.result
 }
 
@@ -147,7 +141,7 @@ export async function getNFTTokens(address){
         address: address,
         apiKey: 'A1CIYWKZKTD4NTNH2MPRHE7Q9HNEYSKSP8'
     }
-    const res = await axios.get("https://api.etherscan.io/api", {params: params})
+    const res = await axios.get(proxy_heroku + "https://api.etherscan.io/api", {params: params})
     return res.data.result
 }
 
@@ -161,7 +155,7 @@ function getPoaps(spec){
 
 export async function getPoapTokens(address){
     let poapList = []
-    let api = "http://api.poap.xyz/actions/scan/" + address
+    let api = proxy_heroku + "http://api.poap.xyz/actions/scan/" + address
     const res = await axios.get(api)
     res.data.forEach(element => getPoapRecommendation(element.event.id))
     //getPoapRecommendation("21917")
@@ -202,7 +196,7 @@ export async function getPoapRecommendation(eventID){
     try{
         var result = await axios({
             method: "POST",
-            url:  proxy_heroku+"https://api.thegraph.com/subgraphs/name/poap-xyz/poap",
+            url:  proxy_heroku + "https://api.thegraph.com/subgraphs/name/poap-xyz/poap",
             data: {
                 query: query,
                 variables: variables
