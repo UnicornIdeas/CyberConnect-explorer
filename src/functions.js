@@ -3,6 +3,7 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
 
  import axios from 'axios'
  const web3 = require('web3')
+ const proxy_heroku = "https://fast-wave-67731.herokuapp.com/"
 
   export function assignMutualConnections(fromAddr, followers){
     var newfollowers=[]
@@ -20,20 +21,20 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
     try{
         var result = await axios({
             method: "POST",
-            url:  "https://api.cybertino.io/connect/",
+            url:  proxy_heroku+"https://api.cybertino.io/connect/",
             data: {
                 query: query,
                 variables: variables
             },
             mode: 'cors',
             headers: {
-                'Content-Type': 'application/json'
-                //"Access-Control-Allow-Origin": "*",
+                'Content-Type': 'application/json',
+                // "Access-Control-Request-Headers":"content-type",
+                // "Access-Control-Request-Methods":"POST, OPTIONS",
                 //"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
                 //no cors mode
                 //"Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-        
-              }
+            }
         });
         return result.data.data
     } catch(error){
@@ -201,7 +202,7 @@ export async function getPoapRecommendation(eventID){
     try{
         var result = await axios({
             method: "POST",
-            url:  "https://api.thegraph.com/subgraphs/name/poap-xyz/poap",
+            url:  proxy_heroku+"https://api.thegraph.com/subgraphs/name/poap-xyz/poap",
             data: {
                 query: query,
                 variables: variables

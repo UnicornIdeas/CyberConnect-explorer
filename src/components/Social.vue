@@ -1,5 +1,9 @@
 <template>
-  <v-container class="fill-height main-body pt-12" id="renderContainer">
+  <v-container class="fill-height main-body pt-12">
+    <div
+      id="renderContainer"
+      :style="graphView === true ? 'z-index: 1;' : 'z-index:-1'"
+    />
     <v-row justify="space-between">
       <v-col cols="3">
         <!-- user card -->
@@ -755,8 +759,8 @@ export default {
     window.onresize = this.cardreposition;
 
     //init graph
-    this.container = document.getElementById('renderContainer');
     this.graph = new Graph();
+    this.container = document.getElementById('renderContainer');
     this.renderer = new Sigma(this.graph, this.container, {
       renderEdgeLabels: true,
       defaultLabelColor: '#fff',
@@ -828,6 +832,14 @@ export default {
 </script>
 
 <style scoped>
+#renderContainer {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .main-body {
   padding-right: 15vw !important;
   padding-left: 15vw !important;
@@ -908,6 +920,8 @@ export default {
 
 .connections-table {
   background: #21212d !important;
+  position: relative;
+  z-index: 1;
 }
 
 .connection-card {
