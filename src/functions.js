@@ -5,8 +5,6 @@ import { BASIC_INFO, IDENTITY_QUERY } from './graphql/queries.js'
  const web3 = require('web3')
  const proxy_heroku = "https://fast-wave-67731.herokuapp.com/"
 
- const proxy_heroku = "https://fast-wave-67731.herokuapp.com/"
-
   export function assignMutualConnections(fromAddr, followers){
     var newfollowers=[]
     followers.forEach(element => {
